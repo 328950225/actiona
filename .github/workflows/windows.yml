@@ -55,6 +55,18 @@ jobs:
       working-directory: ${{github.workspace}}/build
       shell: bash
       run: cmake --build . --config $BUILD_TYPE --parallel 2
+   
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1.1.4
+      env:
+         upload_url: ${{ steps.create_release.outputs.upload_url }}
+         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+       tag_name: ${{ steps.get_version.outputs.version }}
+       release_name: actiona
+       body: |
+              ${{ steps.Changelog.outputs.changelog }}           
     - name: 7zip pack
       uses: DuckSoft/create-7z-action@v1.0
       with:
@@ -68,7 +80,7 @@ jobs:
       env:
          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-         upload_url: ${{ needs.create_release.outputs.upload_url }}
+         upload_url: ${{ steps.create_release.outputs.upload_url }}
          asset_path: \build.7z
          asset_name: build.7z
          asset_content_type: application/7z
