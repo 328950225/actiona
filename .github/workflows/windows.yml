@@ -55,7 +55,9 @@ jobs:
        release_name: TrinityCore-NPCBOT-Eluna-zhCN_${{ steps.get_version.outputs.version }}
        body: |
               ${{ steps.Changelog.outputs.changelog }}                                            
-
+    - uses: actions/checkout@v2
+      with:
+        submodules: recursive
     - uses: suisei-cn/actions-download-file@v1
       id: downloadfile
       name: Download prebuilt OpenCV
