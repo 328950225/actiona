@@ -10,17 +10,55 @@ env:
   BUILD_TYPE: Release
 
 jobs:
+  create_release:
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+      get_version: ${{ steps.get_version.outputs.version }}
+    name: Create release
   build:
+    needs: [create_release]
     strategy:
       fail-fast: false
       matrix:
         profile: [ON, OFF]
         updater: [ON, OFF]
-    runs-on: windows-2019
+    runs-on: windows-latest
     steps:
+    - name: Get Version
+      id: get_version
+      uses: battila7/get-version-action@v2
+    - run: echo ${{ steps.get_version.outputs.version }}
+    - run: echo ${{ steps.get_version.outputs.version-without-v }}
+      env: 
+       get_version: ${{ steps.get_version.outputs.version }}
+    - name: Get current time
+      uses: srfrnk/current-time@master
+      id: current-time
+      with: 
+        format: YYMMDD
+    - name: Use current time
+      env:
+        TIME: "${{ steps.current-time.outputs.time }}"
+        F_TIME: "${{ steps.current-time.outputs.formattedTime }}"
+      run: |
+       echo $TIME
+       echo ${{ github.ref }}
+    - name: Use current time
     - uses: actions/checkout@v2
       with:
         submodules: recursive
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1.1.4
+      env:
+         upload_url: ${{ steps.create_release.outputs.upload_url }}
+         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+       tag_name: ${{ steps.get_version.outputs.version }}
+       release_name: TrinityCore-NPCBOT-Eluna-zhCN_${{ steps.get_version.outputs.version }}
+       body: |
+              ${{ steps.Changelog.outputs.changelog }}                                            
 
     - uses: suisei-cn/actions-download-file@v1
       id: downloadfile
@@ -56,17 +94,7 @@ jobs:
       shell: bash
       run: cmake --build . --config $BUILD_TYPE --parallel 2
    
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1.1.4
-      env:
-         upload_url: ${{ steps.create_release.outputs.upload_url }}
-         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-       tag_name: ${{ steps.get_version.outputs.version }}
-       release_name: actiona
-       body: |
-              ${{ steps.Changelog.outputs.changelog }}           
+        
     - name: 7zip pack
       uses: DuckSoft/create-7z-action@v1.0
       with:
